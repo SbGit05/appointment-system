@@ -7,7 +7,7 @@ export default function AdminPanel() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await fetch(`${API_BASE}/appointments`);
+      const res = await fetch(`${API_BASE}/api/appointments`);
       if (res.ok) {
         setAppointments(await res.json());
       }
@@ -22,7 +22,7 @@ export default function AdminPanel() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await fetch(`${API_BASE}/appointments/${id}/status?status=${newStatus}`, {
+      await fetch(`${API_BASE}/api/appointments/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       fetchAppointments();

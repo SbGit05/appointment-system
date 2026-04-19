@@ -7,7 +7,7 @@ export default function QueueTracker({ fullWidth }) {
 
   const fetchQueue = async () => {
     try {
-      const res = await fetch(`${API_BASE}/appointments/queue/live`);
+      const res = await fetch(`${API_BASE}/api/appointments/queue/live`);
       if (res.ok) {
         setQueueData(await res.json());
       }
