@@ -1,0 +1,34 @@
+# render.yaml — Render deployment configuration
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: appointment-backend
+    runtime: docker
+    dockerfilePath: ./backend/DockerFile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: appointment-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: appointment-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: appointment-db
+          property: password
+      - key: ALLOWED_ORIGINS
+        # Set this to your Vercel frontend URL after deployment,
+        # e.g. https://appointment-system-sid.vercel.app
+        value: https://your-app.vercel.app
+
+databases:
+  - name: appointment-db
+    plan: free
+    databaseName: appointment_db

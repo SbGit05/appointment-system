@@ -2,6 +2,7 @@ import { useState } from 'react'
 import AppointmentForm from './components/AppointmentForm'
 import QueueTracker from './components/QueueTracker'
 import AdminPanel from './components/AdminPanel'
+import MyBookings from './components/MyBookings'
 
 function App() {
   const [activeTab, setActiveTab] = useState('book');
@@ -16,6 +17,12 @@ function App() {
           onClick={() => setActiveTab('book')}
         >
           Book Appointment
+        </button>
+        <button 
+          className={`btn ${activeTab === 'my-bookings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('my-bookings')}
+        >
+          My Bookings
         </button>
         <button 
           className={`btn ${activeTab === 'queue' ? 'active' : ''}`}
@@ -37,6 +44,9 @@ function App() {
             <AppointmentForm />
             <QueueTracker />
           </div>
+        )}
+        {activeTab === 'my-bookings' && (
+          <MyBookings />
         )}
         {activeTab === 'queue' && (
           <QueueTracker fullWidth />

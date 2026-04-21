@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/appointments")
-@CrossOrigin(origins = "*") // Allow all for simplicity locally
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
@@ -44,5 +43,16 @@ public class AppointmentController {
     @PutMapping("/{id}/status")
     public ResponseEntity<AppointmentResponse> updateStatus(@PathVariable Long id, @RequestParam Status status) {
         return ResponseEntity.ok(appointmentService.updateStatus(id, status));
+    }
+
+    @GetMapping("/customer")
+    public ResponseEntity<List<AppointmentResponse>> getCustomerAppointments(@RequestParam String email) {
+        return ResponseEntity.ok(appointmentService.getCustomerAppointments(email));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> cancelAppointment(@PathVariable Long id) {
+        appointmentService.cancelAppointment(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
 
-const API_BASE = 'http://localhost:8081/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
 
 export default function AdminPanel() {
   const [appointments, setAppointments] = useState([]);
+  const [message, setMessage] = useState(null);
+
+  const showMessage = (text, isSuccess = true) => {
+    setMessage({ text, isSuccess });
+    setTimeout(() => setMessage(null), 3500);
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -20,21 +26,65 @@ export default function AdminPanel() {
     fetchAppointments();
   }, []);
 
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, newStatus, customerName) => {
     try {
       await fetch(`${API_BASE}/appointments/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       fetchAppointments();
+      if (newStatus === 'COMPLETED') {
+        showMessage(`✅ Appointment completed — customer record for "${customerName}" has been removed.`);
+      } else if (newStatus === 'CANCELLED') {
+        showMessage(`🚫 Appointment for "${customerName}" has been cancelled.`);
+      }
     } catch (e) {
-      console.error('Error updating status');
+      showMessage('Failed to update status.', false);
     }
+  };
+
+  const deleteAppointment = async (id, customerName) => {
+    if (!window.confirm(`Delete the cancelled booking for "${customerName}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) {
+        showMessage(`🗑️ Cancelled booking for "${customerName}" has been removed.`);
+        fetchAppointments();
+      } else {
+        showMessage('Failed to delete booking.', false);
+      }
+    } catch (e) {
+      showMessage('Error deleting booking.', false);
+    }
+  };
+
+  const statusStyle = (status) => {
+    const map = {
+      SCHEDULED:   { background: 'rgba(59, 130, 246, 0.2)',  color: '#93c5fd' },
+      IN_PROGRESS: { background: 'rgba(16, 185, 129, 0.2)',  color: '#6ee7b7' },
+      COMPLETED:   { background: 'rgba(139, 92, 246, 0.2)',  color: '#c4b5fd' },
+      CANCELLED:   { background: 'rgba(239, 68, 68, 0.15)',  color: '#fca5a5' },
+    };
+    return map[status] || { background: 'rgba(255,255,255,0.1)', color: '#fff' };
   };
 
   return (
     <div className="glass-panel">
       <h2>Admin Dashboard</h2>
-      
+
+      {message && (
+        <div style={{
+          marginBottom: '16px',
+          padding: '10px 16px',
+          borderRadius: '8px',
+          background: message.isSuccess ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+          color: message.isSuccess ? '#6ee7b7' : '#fca5a5',
+          border: `1px solid ${message.isSuccess ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
+          fontSize: '0.9rem'
+        }}>
+          {message.text}
+        </div>
+      )}
+
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', marginTop: '20px' }}>
           <thead>
@@ -59,22 +109,24 @@ export default function AdminPanel() {
                 </td>
                 <td>
                   <span style={{
-                    background: app.status === 'SCHEDULED' ? 'rgba(59, 130, 246, 0.2)' : 
-                               app.status === 'IN_PROGRESS' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-                    padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem'
+                    ...statusStyle(app.status),
+                    padding: '4px 10px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 500
                   }}>
                     {app.status}
                   </span>
                 </td>
-                <td style={{ display: 'flex', gap: '8px', padding: '12px 0' }}>
+                <td style={{ display: 'flex', gap: '8px', padding: '12px 0', flexWrap: 'wrap' }}>
                   {app.status === 'SCHEDULED' && (
-                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => updateStatus(app.id, 'IN_PROGRESS')}>Start</button>
+                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => updateStatus(app.id, 'IN_PROGRESS', app.customerName)}>Start</button>
                   )}
                   {app.status === 'IN_PROGRESS' && (
-                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#10b981' }} onClick={() => updateStatus(app.id, 'COMPLETED')}>Complete</button>
+                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#10b981' }} onClick={() => updateStatus(app.id, 'COMPLETED', app.customerName)}>Complete</button>
                   )}
                   {app.status !== 'COMPLETED' && app.status !== 'CANCELLED' && (
-                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444' }} onClick={() => updateStatus(app.id, 'CANCELLED')}>Cancel</button>
+                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444' }} onClick={() => updateStatus(app.id, 'CANCELLED', app.customerName)}>Cancel</button>
+                  )}
+                  {app.status === 'CANCELLED' && (
+                    <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid #6b7280', color: '#9ca3af' }} onClick={() => deleteAppointment(app.id, app.customerName)}>Delete</button>
                   )}
                 </td>
               </tr>

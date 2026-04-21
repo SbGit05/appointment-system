@@ -22,4 +22,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     Integer findMaxQueueNumberByDate(@Param("date") LocalDate date);
 
     Optional<Appointment> findFirstByAppointmentDateAndStatusOrderByQueueNumberAsc(LocalDate date, Status status);
+
+    // Find all appointments for a customer by their email
+    List<Appointment> findByUserEmail(String email);
+
+    // Count remaining appointments for a user (excluding completed/cancelled)
+    long countByUserIdAndStatusNotIn(Long userId, List<Status> statuses);
 }

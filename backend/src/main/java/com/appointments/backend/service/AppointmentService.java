@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,7 +77,7 @@ public class AppointmentService {
     public AppointmentResponse updateStatus(Long id, Status newStatus) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
-        
+
         appointment.setStatus(newStatus);
         appointment = appointmentRepository.save(appointment);
 
@@ -84,7 +85,48 @@ public class AppointmentService {
             System.out.println("NOTIFICATION: " + appointment.getUser().getName() + ", it is now your turn! Please proceed.");
         }
 
-        return mapToResponse(appointment);
+        AppointmentResponse response = mapToResponse(appointment);
+
+        // Auto-delete appointment and customer record once the slot is marked COMPLETED
+        if (newStatus == Status.COMPLETED) {
+            User user = appointment.getUser();
+            appointmentRepository.delete(appointment);
+
+            // Delete the user only if they have no other active (non-completed, non-cancelled) appointments
+            long remainingActive = appointmentRepository.countByUserIdAndStatusNotIn(
+                    user.getId(),
+                    Arrays.asList(Status.COMPLETED, Status.CANCELLED)
+            );
+            if (remainingActive == 0) {
+                userRepository.delete(user);
+                System.out.println("INFO: Customer record deleted for " + user.getName() + " after appointment completion.");
+            }
+        }
+
+        return response;
+    }
+
+    public List<AppointmentResponse> getCustomerAppointments(String email) {
+        return appointmentRepository.findByUserEmail(email).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void cancelAppointment(Long id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        if (appointment.getStatus() == Status.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel a completed appointment.");
+        }
+        if (appointment.getStatus() == Status.CANCELLED) {
+            throw new IllegalStateException("Appointment is already cancelled.");
+        }
+
+        appointment.setStatus(Status.CANCELLED);
+        appointmentRepository.save(appointment);
+        System.out.println("NOTIFICATION: Appointment for " + appointment.getUser().getName() + " on " + appointment.getAppointmentDate() + " at " + appointment.getTimeSlot() + " has been cancelled.");
     }
 
     public Map<String, Object> getLiveQueueNumber(LocalDate date) {
