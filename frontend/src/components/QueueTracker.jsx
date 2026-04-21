@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 
+<<<<<<< HEAD
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+=======
+const API_BASE = 'https://appointment-system-cylp.onrender.com';
+>>>>>>> ce4fa02823c983c127646a0b92a7238f13b0d743
 
 export default function QueueTracker({ fullWidth }) {
   const [queueData, setQueueData] = useState({ currentQueueNumber: '-', timeSlot: '-', status: 'LOADING' });
 
   const fetchQueue = async () => {
     try {
-      const res = await fetch(`${API_BASE}/appointments/queue/live`);
+      const res = await fetch(`${API_BASE}/api/appointments/queue/live`);
       if (res.ok) {
         setQueueData(await res.json());
       }

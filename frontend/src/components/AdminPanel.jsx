@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 
+<<<<<<< HEAD
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+=======
+const API_BASE = 'https://appointment-system-cylp.onrender.com';
+>>>>>>> ce4fa02823c983c127646a0b92a7238f13b0d743
 
 export default function AdminPanel() {
   const [appointments, setAppointments] = useState([]);
@@ -13,7 +17,7 @@ export default function AdminPanel() {
 
   const fetchAppointments = async () => {
     try {
-      const res = await fetch(`${API_BASE}/appointments`);
+      const res = await fetch(`${API_BASE}/api/appointments`);
       if (res.ok) {
         setAppointments(await res.json());
       }
@@ -28,7 +32,7 @@ export default function AdminPanel() {
 
   const updateStatus = async (id, newStatus, customerName) => {
     try {
-      await fetch(`${API_BASE}/appointments/${id}/status?status=${newStatus}`, {
+      await fetch(`${API_BASE}/api/appointments/${id}/status?status=${newStatus}`, {
         method: 'PUT'
       });
       fetchAppointments();
