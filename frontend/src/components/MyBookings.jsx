@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
 export default function MyBookings() {
   const [email, setEmail] = useState('');
@@ -8,11 +8,16 @@ export default function MyBookings() {
   const [message, setMessage] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const getFullUrl = (path) => {
+    const base = API_BASE.endsWith('/api') ? API_BASE : `${API_BASE}/api`;
+    return `${base}${path}`;
+  };
+
   const fetchAppointments = async (e) => {
     if (e) e.preventDefault();
     setMessage(null);
     try {
-      const res = await fetch(`${API_BASE}/appointments/customer?email=${encodeURIComponent(email)}`);
+      const res = await fetch(getFullUrl(`/appointments/customer?email=${encodeURIComponent(email)}`));
       if (res.ok) {
         const data = await res.json();
         setAppointments(data);
@@ -32,7 +37,7 @@ export default function MyBookings() {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
     
     try {
-      const res = await fetch(`${API_BASE}/appointments/${id}`, {
+      const res = await fetch(getFullUrl(`/appointments/${id}`), {
         method: 'DELETE'
       });
       if (res.ok || res.status === 204) {
